@@ -4,19 +4,23 @@ export const handlePayment = async (event: any) => {
   const { orderId, userId, productId } = event;
 
   try {
-    console.log("💳 Processing payment for order:", orderId);
+    console.log(`\n💳 Processing payment for order: ${orderId}`);
+    console.log(`   User: ${userId}, Product: ${productId}`);
 
-    // Simulate payment (random success/failure)
+    // Simulate payment processing (random success/failure - 70% success rate)
     const isSuccess = Math.random() > 0.3;
+    
+    // Add a small delay to simulate processing
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     if (isSuccess) {
-      console.log("✅ Payment Success:", orderId);
+      console.log(`✅ Payment Success for order: ${orderId}`);
 
       await producer.send({
         topic: "payment-events",
         messages: [
           {
-            key: orderId, // Use orderId as key for ordering
+            key: orderId,
             value: JSON.stringify({
               type: "PAYMENT_SUCCESS",
               orderId,
@@ -27,8 +31,10 @@ export const handlePayment = async (event: any) => {
           },
         ],
       });
+      
+      console.log(`📤 Published PAYMENT_SUCCESS event to Kafka\n`);
     } else {
-      console.log("❌ Payment Failed:", orderId);
+      console.log(`❌ Payment Failed for order: ${orderId}`);
 
       await producer.send({
         topic: "payment-events",
@@ -41,14 +47,16 @@ export const handlePayment = async (event: any) => {
               userId,
               productId,
               timestamp: new Date().toISOString(),
-              reason: "Payment declined"
+              reason: "Payment declined - insufficient funds"
             }),
           },
         ],
       });
+      
+      console.log(`📤 Published PAYMENT_FAILED event to Kafka\n`);
     }
   } catch (err) {
-    console.error("Error handling payment:", err);
+    console.error("❌ Error handling payment:", err);
     
     // Send failure event if something goes wrong
     try {
