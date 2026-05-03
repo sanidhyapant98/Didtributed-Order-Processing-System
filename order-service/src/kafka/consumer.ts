@@ -1,0 +1,60 @@
+import { Kafka } from "kafkajs";
+import { prisma } from "../prisma";
+
+const kafka = new Kafka({
+  clientId: "order-service-consumer",
+  brokers: (process.env.KAFKA_BROKER || "localhost:9092").split(","),
+});
+
+const consumer = kafka.consumer({ groupId: "order-group" });
+
+export const startOrderConsumer = async () => {
+  try {
+    await consumer.connect();
+    console.log("✅ Order Service Consumer connected");
+
+    await consumer.subscribe({
+      topic: "payment-events",
+      fromBeginning: false,
+    });
+
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        try {
+          const data = JSON.parse(message.value!.toString());
+          console.log("📥 Order Service received payment event:", data);
+
+          if (data.type === "PAYMENT_SUCCESS") {
+            // Update order status to COMPLETED
+            await prisma.order.update({
+              where: { id: data.orderId },
+              data: { status: "COMPLETED" }
+            });
+            console.log(`✅ Order ${data.orderId} marked as COMPLETED`);
+          } 
+          else if (data.type === "PAYMENT_FAILED") {
+            // Update order status to FAILED
+            await prisma.order.update({
+              where: { id: data.orderId },
+              data: { status: "FAILED" }
+            });
+            console.log(`❌ Order ${data.orderId} marked as FAILED`);
+          }
+        } catch (err) {
+          console.error("Error processing payment event:", err);
+        }
+      },
+    });
+  } catch (err) {
+    console.error("Order consumer error:", err);
+  }
+};
+
+export const disconnectOrderConsumer = async () => {
+  try {
+    await consumer.disconnect();
+    console.log("Order consumer disconnected");
+  } catch (err) {
+    console.error("Error disconnecting order consumer:", err);
+  }
+};
