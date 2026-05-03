@@ -3,7 +3,7 @@ import { handlePayment } from "../handlers/payment.handler";
 
 const kafka = new Kafka({
   clientId: "payment-service",
-  brokers: [process.env.KAFKA_BROKER!],
+  brokers: (process.env.KAFKA_BROKER || "localhost:9092").split(","),
 });
 
 const consumer = kafka.consumer({ groupId: "payment-group" });

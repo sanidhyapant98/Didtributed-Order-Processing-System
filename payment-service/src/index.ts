@@ -11,5 +11,3 @@ const start = async () => {
 };
 
 start();
-console.log("ALL ENV:", process.env);
-console.log("BROKER:", process.env.KAFKA_BROKER);
