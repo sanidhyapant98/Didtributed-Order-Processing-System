@@ -1,0 +1,28 @@
+// src/index.ts
+
+import dotenv from "dotenv";
+dotenv.config();
+
+import { startConsumer } from "./kafka/consumer";
+
+const start = async () => {
+  try {
+    console.log("🚀 Starting Inventory Service...");
+
+    await startConsumer();
+
+    console.log("✅ Inventory Service running");
+    console.log("📥 Listening for payment-events\n");
+
+  } catch (err) {
+    console.error("❌ Failed to start Inventory Service:", err);
+    process.exit(1);
+  }
+};
+
+process.on("SIGINT", async () => {
+  console.log("\n🛑 Shutting down Inventory Service...");
+  process.exit(0);
+});
+
+start();
