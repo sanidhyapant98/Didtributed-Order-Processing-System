@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch src/index.ts",
     "dev:watch": "cross-env NODE_ENV=development nodemon --config nodemon.json",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
