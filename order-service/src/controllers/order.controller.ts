@@ -17,6 +17,14 @@ export const createOrder = async (req: Request, res: Response) => {
 
         console.log(`\n📝 Creating order for userId: ${userId}, productId: ${productId}`);
 
+        const product = await prisma.product.findUnique({
+            where: {
+                id: productId
+            }
+        })
+        if(!product){
+            return res.status(400).json({error: "❌ Product not found"})
+        }
         // Create order in database
         const order = await prisma.order.create({
             data: {
